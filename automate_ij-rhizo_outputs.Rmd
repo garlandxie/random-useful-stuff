@@ -1,0 +1,110 @@
+---
+title: "imagej_test"
+author: "Garland Xie"
+date: "November 15, 2018"
+output: html_document
+---
+
+```{r libraries}
+library(tidyverse)
+library(rebus)
+library(here)
+```
+
+```{r}
+histo_list <- list.files(path = here("roots_output"), 
+                         pattern = "Histo")
+```
+
+```{r import data}
+
+make_df <- function(x) {
+  
+  # grab ids from file name, delimited by slash, then underscore
+  ids  <- str_split(x, pattern = "/") %>%
+  unlist()
+  
+  ids2 <- str_split(ids[7], pattern = "_") %>%
+    unlist()
+
+  # make df of traits from a given scan
+  trait_df <- read_delim(x, delim = " ") %>%
+    select("length_mm" = "Root Length (mm)",
+           "radius_mm" = "Root Radius (mm)") %>%
+    
+   # remove last row
+   slice(-nrow(.)) %>% 
+    
+   # root length mm has to be above zero
+   filter(length_mm > 0) %>% 
+    
+   # add in useful information
+   mutate(block   = ids2[1], 
+          pot_id  = ids2[2],
+          trt     = ids2[3],
+          scan    = ids2[4] %>% as.numeric)  
+  
+  # return df 
+  return(trait_df)
+}
+
+```
+
+```{r iteration}
+final_df <- map_dfr(here("roots_output", histo_list), 
+                    make_df)
+```
+
+```{r sanity check}
+
+# all of the scan numbers present?
+all(seq(1:47) %in% unique(final_df$scan))
+
+```
+
+
+```{r}
+final_df %>% 
+  group_by(block, pot_id, trt) %>%
+  summarise(sample_n       = length(unique((scan))),
+            mean_radius_mm = mean(radius_mm, na.rm = TRUE),
+            sum_length_mm  = sum(length_mm, na.rm = TRUE),
+            ratio          = sum_length_mm/sample_n)
+```
+
+```{r}
+sample_25 <- final_df %>% 
+  group_by(block, pot_id, trt, scan) %>%
+  filter(scan %in% base::sample(seq(1:48), size =  25)) %>%
+  ungroup() %>%
+  group_by(block, pot_id, trt) %>%
+  summarise(sample_n       = length(unique((scan))),
+            mean_radius_mm = mean(radius_mm, na.rm = TRUE),
+            sum_length_mm  = sum(length_mm, na.rm = TRUE),
+            ratio          = sum_length_mm/sample_n)
+
+sample_25
+```
+
+
+```{r}
+final_df %>% 
+  group_by(block, pot_id, trt, scan) %>%
+  filter(scan %in% base::sample(x = seq(1:length(unique(.$scan))), size = 10)) %>%
+  ungroup() %>%
+  group_by(block, pot_id, trt) %>%
+  summarise(sample_n       = length(unique((scan))),
+            mean_radius_mm = mean(radius_mm, na.rm = TRUE),
+            sum_length_mm  = sum(length_mm, na.rm = TRUE),
+            ratio          = sum_length_mm/sample_n)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
