@@ -38,7 +38,7 @@ read_histograms <- function(txt_file) {
     slice(-nrow(.)) %>% 
     
     # root length mm has to be above zero mm AND 
-    # root diameter has to be above two mm 
+    # root diameter has to be below two mm 
     filter(length_mm > 0 & radius_mm < 2) %>% 
     
     # add in useful information to complete df 
