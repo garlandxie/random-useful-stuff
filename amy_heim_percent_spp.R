@@ -2,8 +2,8 @@
 library(tidyverse)
 
 # import data ------------------------------------------------------------------
-allpin <- read_delim("allpin.txt", delim = "\t")
 
+allpin <- read_delim("allpin.txt", delim = "\t")
 
 # clean ------------------------------------------------------------------------
 
@@ -12,23 +12,26 @@ df <- allpin %>%
   gather(key = date, 
          value = spp_biomass, 
          c(-Sp, -Treat, -Rep, -QR, -Quad)) %>%
-  drop_na()
+  drop_na() # drop rows with missing values 
 
-# get percent per spp in each treatment
+# get percent cover for each spp in each treatment rep 
 per_spp <- df1 %>%
   filter(spp_biomass > 0) %>%
   group_by(date, Treat, Rep, Sp) %>%
   summarize(biomass = sum(spp_biomass)) %>% 
   arrange(date, Treat, Rep, Sp) %>%
   mutate(comm_biomass = sum(biomass), 
-         per_biomass  = (biomass/comm_biomass)*100)
+         per_biomass  = (biomass/comm_biomass)*100) %>%
+  select(-biomass, -comm_biomass) 
 
-# sanity check
+# sanity check: community cover is 100% for all treatment reps?
 check1 <- per_spp %>%
   group_by(date, Treat, Rep) %>%
   summarize(sum_biomass = sum(per_biomass)) %>%
   pull(sum_biomass) %>%
-  var() # all values are the same = zero variance
+  var() # all values should be the same so zero variance then
+
+# Done! yayy
   
 
 
