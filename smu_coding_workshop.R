@@ -171,7 +171,6 @@ cat_df1[1:2, "cat_height_mm"]
 
 # Learning about functions -----------------------------------------------------
 
-# Short detour before we head off to the details of importing data 
 # You’ve noticed you’ve used a couple of functions("tools") in R 
 
 c()
@@ -184,33 +183,37 @@ data.frame()
 # additional arguments - medium heat
 # output - a cooked meal 
 
-# a decent example that everyone has to use: bringing in some data 
+# a decent example that everyone has to use: calculating averages
+avg_height1 <- mean(cat_height_mm) # required input: a group of numeric values
 
-test1 <- read.csv(file = "test.csv") # required input: the file to import
+# Notice the weird output: NA_real_
 
-# behind the scenes, there are additional arguments that are set to a default
-# for example, you might have an extra comment on the top of your csv file)
+# there is a default setting for this function: na.rm (removng missing values)
+avg_height2 <- mean(cat_height_mm, na.rm = FALSE)
 
-test2 <- read.csv(file = "test.csv",
-         skip = 0) # default setting (you don't have to specify this)
+# in theory, these two vectors should be the same 
+# we know this is true because the outputs are exactly the same for both
+
+# let's try changing our default setting
+avg_height3 <- mean(cat_height_mm, na.rm = TRUE) # from FALSE to TRUE
+
+# in reality: there are lot more settings we can play around with
+
+# every tool is open-sourced - you can peek under the hood to see how it works 
+# also, a lot of our workflow in R revolves heavily around using functions
+# some functions are already installed in R (like the ones we've used)
+# for other functions, we install them separately as toolkits (libraries)
+
+# if you want help for a certain function, use ?function_name
+# here, you can see more details about the function:
+  # what toolkit the function derives from
+  # what the function does
+  # what are the required inputs and additional arguments for each function
+  # more details to clarify some concepts
+  # some examples to help you with coding
+?data.frame
 
 
-# in theory, test1 and test2 should be the same data frame. 
-# let's test this out
-test1 == test2
-
-# if you want to grab column names as header, we have to change some settings
-test3 <- read.csv(file   = "test.csv",
-                  skip   = 1) # you have to change this setting in this case
-
-# sanity check again: they're different data frames!
-test1 == test3
-
-# Import: every tool is open-sourced
-# meaning you peek under the hood of each function to see how they work 
-# remember that a lot of our workflow in R revolves heavily around functions
-
-# people can make their function and store it into toolkit (libraries) 
 
 
 
