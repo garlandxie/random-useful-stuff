@@ -1,4 +1,7 @@
-# SMU R Coding workshop for the Biology Department 
+# SMU R Coding workshop for the Biology Department
+# Purpose: teaching the basebone basics of R for students and professors
+# Note: this is a really rough draft (but it does have cat names...)
+# Code developed by Garland Xie (garlandxie@smu.ca)
 
 # Data types in R --------------------------------------------------------------
 
