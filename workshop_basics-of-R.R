@@ -1,7 +1,4 @@
 # SMU R Coding workshop for the Biology Department 
-# Purpose: teach graduate and undergraduate students how to code in R (just the basics though)
-# Note: this is a very rough draft of the workshop tutorial (but it has cat names!) 
-# Code developed by Garland Xie (contact: garlandxie@smu.ca)
 
 # Data types in R --------------------------------------------------------------
 
@@ -172,6 +169,17 @@ cat_df1[1:2, "cat_height_mm"]
 # e.g., finding extreme values that don't make sense (subsetting rows)
 # e.g., only analyzing only two factors in an experiment (subsetting columns)
 
+# we can get a quick look at what's inside a data-frame which tells us: 
+  # number of observations
+  # number of columns
+  # name of columns
+  # data types for each column
+  # a quick look at the first X rows of data
+str(cat_df1)
+
+# we can also grab columns by: 
+cat_df1$cat_id
+
 # Learning about functions -----------------------------------------------------
 
 # You’ve noticed you’ve used a couple of functions("tools") in R 
@@ -215,6 +223,8 @@ avg_height3 <- mean(cat_height_mm, na.rm = TRUE) # from FALSE to TRUE
   # more details to clarify some concepts
   # some examples to help you with coding
 ?data.frame
+
+
 
 
 
