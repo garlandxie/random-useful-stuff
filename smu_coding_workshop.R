@@ -83,9 +83,9 @@ c(NA, 1, "Max")
 
 # (Not so great) examples of naming objects
 foo <- c("Simba", "Tigger", "Max", "Felix", "Garfield") # generic name
-c <-  c("Simba", "Tigger", "Max") # conflicting function name
-TRUE <-  c("Simba", "Tigger", "Max") # conflicting with logical operators
-cat.names <-  c("Simba", "Tigger", "Max") # conflicting with S3 objects
+c <-  c("Simba", "Tigger", "Max") # avoid having same name as other functions
+TRUE <-  c("Simba", "Tigger", "Max") # avoid using names that exist in base R
+cat.names <-  c("Simba", "Tigger", "Max") # avoid function name conventions (S3)
 
 # (Better) examples of naming objects
 cat_id         <- c(1, 2, 3, 4, 5, 6)
@@ -164,10 +164,53 @@ cat_df1[-1, ]    # grab everything but the first row
 cat_df1[1:2, "cat_height_mm"]
 
 # why do we have to know this?
-# sometimes, we just want to quickly find certain parts of data 
-# indexing helps us achieve this goal
+# reason: we want to quickly find certain parts of data for specific purposes
+# indexing helps us achieve this goal by subsetting our data 
 # e.g., finding extreme values that don't make sense (subsetting rows)
 # e.g., only analyzing only two factors in an experiment (subsetting columns)
+
+# Learning about functions -----------------------------------------------------
+
+# Short detour before we head off to the details of importing data 
+# You’ve noticed you’ve used a couple of functions("tools") in R 
+
+c()
+data.frame()
+
+# These tools are formally called functions: 
+# all of them have a required input and additional arguments to form an output
+# think of using a microwave: you have to give some instructions for it to work
+# required input - opening the door, how long to cook (eg 2 minutes)
+# additional arguments - medium heat
+# output - a cooked meal 
+
+# a decent example that everyone has to use: bringing in some data 
+
+test1 <- read.csv(file = "test.csv") # required input: the file to import
+
+# behind the scenes, there are additional arguments that are set to a default
+# for example, you might have an extra comment on the top of your csv file)
+
+test2 <- read.csv(file = "test.csv",
+         skip = 0) # default setting (you don't have to specify this)
+
+
+# in theory, test1 and test2 should be the same data frame. 
+# let's test this out
+test1 == test2
+
+# if you want to grab column names as header, we have to change some settings
+test3 <- read.csv(file   = "test.csv",
+                  skip   = 1) # you have to change this setting in this case
+
+# sanity check again: they're different data frames!
+test1 == test3
+
+# Import: every tool is open-sourced
+# meaning you peek under the hood of each function to see how they work 
+# remember that a lot of our workflow in R revolves heavily around functions
+
+# people can make their function and store it into toolkit (libraries) 
 
 
 
