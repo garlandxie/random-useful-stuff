@@ -17,6 +17,8 @@ read_histograms <- function(txt_file) {
   
   # works only for Windows OS though
   # get block id, pot id, treatment id and scan id from file name 
+  # assuming the file name follows a specific format
+  # e.g., C:/users/folder/B1_SYNO-01_1_600dpi_GX
   ids <- str_split(txt_file, pattern = "/") %>% 
     unlist %>% 
     tail(n = 1) %>% # grab the last index
