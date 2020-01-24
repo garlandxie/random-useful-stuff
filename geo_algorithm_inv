@@ -1,0 +1,106 @@
+# libraries -------------------------------------------------------------------
+library(sf)
+library(readxl)
+library(here)
+library(raster)
+library(janitor)
+library(dplyr)
+library(rgeos)
+library(ggplot2)
+
+# import data ------------------------------------------------------------------
+
+# get relative file-paths
+link <- here("data/original", "MasterGI_TRCA.xlsx")
+
+# fix parsing issues from read_excel()
+col_class <- c("text",
+               "numeric",
+               "numeric",
+               "text",
+               "text",
+               "text",
+               "text",
+               "text",
+               "numeric")
+
+# master green roof list
+UGS_df <- read_xlsx(link, sheet = "data", col_types = col_class)
+
+# raster dataset
+lc <- raster(here("data/original", "toronto_2007_landcover.img"))
+
+# data cleaning ----------------------------------------------------------------
+
+# coordinates of green roofs
+# requires data cleaning - some entries have the wrong lat/longs 
+gr_coords <- UGS_df %>%
+  clean_names() %>%
+  filter(green_infrastructure_type == "green roof") %>%
+  select(address, lat, lon, gi_area_m2)
+
+# subset df with the wrong lat/longs
+gr1 <- gr_coords %>%
+  filter(lat > 0)
+
+# subset df with the correct lat/longs
+gr2 <- gr_coords %>%
+  filter(lat < 0) %>%
+  rename(lon = lat,
+         lat = lon)
+
+# create df with all correct lat/longs
+# also remove that ottawa location
+gr_coords2 <- rbind(gr1, gr2)  %>%
+  filter(address != "Stonecrest School")
+
+# points -----------------------------------------------------------------------
+
+lat_longs <- gr_coords2 %>%
+  select("lat", "lon") %>%
+  st_as_sf(coords = c("lon", "lat"), remove = FALSE) %>%
+  st_set_crs(4326) %>%
+  st_transform(crs = "+proj=tmerc +lat_0=0 +lon_0=-79.5 +k=0.9999 \n
+                            +x_0=304800 +y_0=0 +datum=NAD27 \n
+                            +units=m +no_defs +ellps=clrk66 \n
+                            +nadgrids=@conus,@alaska,@ntv2_0.gsb,@ntv1_can.dat")
+
+
+# buffers ----------------------------------------------------------------------
+
+buffers <- st_buffer(lat_longs, dist = 100)
+
+# raster masking ---------------------------------------------------------------
+
+z1 <- crop(lc, buffers[1,])
+
+# raster reclassification ------------------------------------------------------
+
+m <- c(2, 7, NA)
+reclass_m <- matrix(m, ncol = 3, byrow = TRUE)
+r <- reclassify(z1, reclass_m)
+
+# raster-to-polygon conversion -------------------------------------------------
+
+t <- rasterToPolygons(r, 
+                      fun = function(x){x == 1}, 
+                      n = 4, 
+                      dissolve = TRUE)
+
+t1 <- disaggregate(t) %>%
+  st_as_sf()
+
+# plot 
+ggplot() + 
+  geom_sf(data = t1) + 
+  geom_sf(data = lat_longs[1,]) # first site
+
+# minimum distance calculation -------------------------------------------------
+
+h <- st_distance(lat_longs[1,], t1, by_element = FALSE, which = "Euclidean")
+min(h)
+
+# save to disk -----------------------------------------------------------------
+
+st_write(lat_longs, "points.shp", update = TRUE)
+st_write(t1, "polygons.shp")
