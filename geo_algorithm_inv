@@ -30,6 +30,9 @@ UGS_df <- read_xlsx(link, sheet = "data", col_types = col_class)
 # raster dataset
 lc <- raster(here("data/original", "toronto_2007_landcover.img"))
 
+# 3D Massing
+bd_height <- readRDS(here("data/working", "3D_building_footprint.RDS"))
+
 # data cleaning ----------------------------------------------------------------
 
 # coordinates of green roofs
@@ -65,10 +68,23 @@ lat_longs <- gr_coords2 %>%
                             +units=m +no_defs +ellps=clrk66 \n
                             +nadgrids=@conus,@alaska,@ntv2_0.gsb,@ntv1_can.dat")
 
+bd2 <- bd_height %>%
+  select("max_height"  = "MAX_HEIGHT",
+         "mean_height" = "AVG_HEIGHT", 
+         "lon"         = "LONGITUDE", 
+         "lat"         = "LATITUDE",
+         geometry) %>%
+  st_transform(crs = "+proj=tmerc +lat_0=0 +lon_0=-79.5 +k=0.9999 \n
+                      +x_0=304800 +y_0=0 +datum=NAD27 \n
+                      +units=m +no_defs +ellps=clrk66 \n
+                      +nadgrids=@conus,@alaska,@ntv2_0.gsb,@ntv1_can.dat")
+  
+lat_longs2 <- st_join(lat_longs, bd2) %>%
+  filter(!is.na(mean_height))
 
 # buffers ----------------------------------------------------------------------
 
-buffers <- st_buffer(lat_longs, dist = 100)
+buffers <- st_buffer(lat_longs2, dist = 100)
 
 # raster masking ---------------------------------------------------------------
 
