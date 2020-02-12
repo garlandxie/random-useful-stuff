@@ -1,0 +1,55 @@
+# libraries --------------------------------------------------------------------
+library(piecewiseSEM) # for doing local estimation of SEM
+
+# simulate model parameters ----------------------------------------------------
+
+set.seed(1234)
+
+# number of public green spaces with spotaneous vegetation
+sites <- c(1:50)
+
+# building height (in m)
+bd_height <- rpois(sites, lambda = 1)
+
+# percent cover of native species 
+native_cover <- ceiling(rbeta(n = sites, shape1 = 3, shape2 = 7)*100)
+
+# percent cover of exotic species
+exotic_cover <- ceiling(rbeta(n = sites, shape1 = 1, shape2 = 7)*100)
+
+# total number of propagules from each site 
+pp <- rpois(n = sites, lambda = 4)
+
+# management intensity - weeding: yes or no
+mi <- factor(rbinom(n = sites, size = 1, prob = 0.5))
+
+# social cue: urban green space type
+# four types: green roof
+soc <- factor(sample(1:4, size = 100, replace = TRUE))
+
+# create df --------------------------------------------------------------------
+
+df1 <- data.frame(sites,
+                  bd_height,
+                  native_cover,
+                  exotic_cover,
+                  pp,
+                  mi,
+                  soc)
+
+
+# piecewiseSEM -----------------------------------------------------------------
+
+# local estimation 
+# can use non-normal distributions for response variable
+# BUT have to remove non-recursive paths (double-headed arrows)
+
+df1_sem <- psem(
+  glm(exotic_cover ~ bd_height + native_cover + pp, "poisson", data = df1),
+  glm(pp ~ bd_height + native_cover, "poisson", data = df1),
+  glm(native_cover ~ soc + mi + bd_height, "poisson", data = df1),
+  glm(bd_height ~ mi, "poisson", data = df1),
+  data = df1
+)
+
+summary(df1_sem)
