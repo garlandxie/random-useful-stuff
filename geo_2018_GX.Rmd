@@ -1,0 +1,118 @@
+---
+title: "Exploring 2018 Forest and Land Cover"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(here)        # for creating relative file-paths
+library(dtplyr)      # for manipulating large datasets
+library(dplyr)
+library(sf)
+```
+
+```{r}
+# relative file-path
+link_lc <- here("data/original", "cotLandcover_2018.RDS")
+
+# read RDS
+lc_2018 <- readRDS(link_lc) 
+```
+
+# Exploratory Data Analysis 
+
+```{r}
+# number of land cover classes
+unique(lc_2018[["gridcode"]])
+```
+ 
+```{r}
+# get number of polygons per land-cover class
+lc_2018[["gridcode"]] %>%
+  table() %>%
+  sort()
+```
+ 
+```{r}
+# purpose of this function: create a new data frame that contains info on a single land-cover class
+# this is done to reduce any computatinal burdens from uploading the original 2018 dataset
+# essentially, I'm doing non-random sampling of the original dataset
+
+# @ param lc is a data.frame or tibble that contains the following columns: 
+# OBJECTID, gridcode, geometry
+# @ param cat is the land-cover category class, where your options are:
+# (1) tree,
+# (2) grass,
+# (3) bare, 
+# (4) water,
+# (5) building, 
+# (6) road, 
+# (7) other paved surfaces, 
+# (8) shrub
+
+split_lc_cats <- function(lc, cat) {
+  
+  if (cat %in% 1:8) {
+    
+  # use dat.table as backend to speed up analysis
+  lz_lc <- dtplyr::lazy_dt(lc)
+  
+  # get only a specific land cover class
+  lc_new_cat <- dplyr::filter(lz_lc, gridcode == as.numeric(cat))
+  
+  # return new df
+  return(as.data.frame(lc_new_cat))
+  
+  } else{
+    
+    print("Input parameter (cat) is outside the range domain of numeric values (i.e., 1 to 8)")
+  } 
+  
+}
+```
+ 
+```{r}
+
+# get non-random subsets of land-cover classes 
+lc_trees <- split_lc_cats(lc = lc_2018, cat = 1)
+lc_grass <- split_lc_cats(lc = lc_2018, cat = 2)
+lc_bare_earth <- split_lc_cats(lc = lc_2018, cat = 3)
+lc_water <- split_lc_cats(lc = lc_2018, cat = 4)
+lc_buildings <- split_lc_cats(lc = lc_2018, cat = 5)
+lc_roads <- split_lc_cats(lc = lc_2018, cat = 6)
+lc_other_paved <- split_lc_cats(lc = lc_2018, cat = 7)
+lc_shrub <- split_lc_cats(lc = lc_2018, cat = 8)
+
+```
+
+```{r}
+
+# purpose of function: save non-random subsets of land-cover classes as an RDS object
+# again, this should reduce any computational burdens
+
+# @param lc_subset - a data-frame containing the following columns:
+# OBJECTID, gridcode, geometry
+# @ param file_name - a character string that indicates the file-name of the saved RDS object
+save_lc_RDS <- function(lc_subset, file_name) {
+  
+  link <- here::here("data/original", file_name)
+  
+  saveRDS(object = lc_subset, file = as.character(file_name))
+  
+}
+```
+
+```{r}
+save_lc_RDS(lc_subset = lc_trees, "lc_2018_trees.RDS")
+save_lc_RDS(lc_subset = lc_grass, "lc_2018_grass.RDS")
+save_lc_RDS(lc_subset = lc_bare_earth, "lc_2018_bare_earth.RDS")
+save_lc_RDS(lc_subset = lc_water, "lc_2018_water.RDS")
+save_lc_RDS(lc_subset = lc_buildings, "lc_2018_building.RDS")
+save_lc_RDS(lc_subset = lc_roads, "lc_2018_roads.RDS")
+save_lc_RDS(lc_subset = lc_other_paved, "lc_2018_other_paved.RDS")
+save_lc_RDS(lc_subset = lc_shrub, "lc_2018_shrub.RDS")
+```
+
