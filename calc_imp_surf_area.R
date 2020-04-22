@@ -56,20 +56,8 @@ lc_u <- lc_urban %>%
 # create buffers
 site_buffers = st_buffer(lat_longs, 500)
 
-# visualize data:
-# buffers - should look like GTA
-ggplot2::ggplot() +
-	ggplot2::geom_sf(data = site_buffers)
-
-# lat longs - should look like the GTA
-ggplot() + 
-  geom_sf(data = lat_longs)
-
 # create intersection of lc_u polygons and site_buffer polygons
-site_urban = st_intersection(site_buffers[1:5, ], lc_u)
-
-# check how many intersections (same as buffer, 129 rows and 3 or 4 columns)
-dim(site_urban)
+site_urban = st_intersection(site_buffers, lc_u)
 
 # area of a single buffer
 area_buffer <-st_area(site_buffers[1,])
