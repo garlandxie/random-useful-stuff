@@ -48,8 +48,7 @@ lat_longs <- site_df %>%
 
 # convert land cover data
 lc_u <- lc_urban %>%
-  st_as_sf() %>%
-  st_combine()
+  st_as_sf() 
 
 # Geospatial analysis ---------------------------------------------------------
 
