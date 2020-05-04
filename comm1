@@ -1,0 +1,36 @@
+# libraries -------------------------------------------------------------------
+library(dplyr)
+library(readxl)
+library(janitor)
+library(tidyr)
+
+# import ----------------------------------------------------------------------
+
+site_df <- read_excel("JSM_PhD_trapnest_data_2011-2013.xlsx", sheet = 3)
+
+# check packaging -------------------------------------------------------------
+
+str(site_df)
+head(site_df, n = 5)
+tail(site_df, n = 5)
+
+# data cleaning ---------------------------------------------------------------
+
+# get bee data only
+site_bees <- site_df %>%
+  clean_names() %>% 
+  filter(bee_wasp == "B") %>%
+  select(site_id, 
+         year = sampling_year_2, 
+         spp = lower_species, 
+         abundance = no_broodcells)
+
+# get total abundance per species for each site
+site_abund <- site_bees %>%
+  group_by(site_id, year, spp) %>%
+  summarize(tot_abund = sum(abundance)) %>%
+  ungroup() 
+
+# get a community data matrix
+comm_matrix <- site_abund %>%
+  pivot_wider(names_from = spp, values_from = tot_abund) 
