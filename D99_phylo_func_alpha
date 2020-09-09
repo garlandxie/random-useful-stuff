@@ -1,0 +1,85 @@
+# calculate phylogenetic alpha diversity (ses.mpd) -----------------------------
+# author(s): Garland Xie, Nicholas Sookhan
+
+# libraries --------------------------------------------------------------------
+library(ape)     # for reading in phylogenetic trees
+library(picante) # for calculating ses.mpd values
+library(vegan)   # for analysing community matrices
+library(here)    # for creating relative file-paths
+library(dplyr)   # for manipulating data 
+library(ggplot2) # for visualising data 
+
+# import -----------------------------------------------------------------------
+
+# community data matrices
+comm_full <- read.csv(here("data/final", "comm_matrix_BB.csv"), row.names = 1)
+comm_3Ab  <- readRDS(here("data/working", "comm_3Ab.rds"))
+comm_5ab  <- readRDS(here("data/working", "comm_5Ab.rds"))
+comm_10ab  <- readRDS(here("data/working", "comm_10Ab.rds"))
+
+# phylogenetic tree
+tree <- read.tree(here("data/original", "phylo_tree_ulm.new"))
+
+# import custom functions
+source(here("src", "functions.R"))
+
+# data cleaning ----------------------------------------------------------------
+
+# convert raw to relative abundance for each species
+comm_relF <- decostand(comm_full, method = "total")
+comm_rel3 <- decostand(comm_3Ab, method = "total")
+comm_rel5 <- decostand(comm_5ab, method = "total")
+comm_rel10 <- decostand(comm_10ab, method = "total")
+
+# clean up spelling mistakes
+tree$tip.label[tree$tip.label == "Heriades_crucifera"] <- "Heriades_carinata"
+tree$tip.label[tree$tip.label == "Megachile_centucularis"] <- "Megachile_centuncularis"
+tree$tip.label[tree$tip.label == "Osmia_atriventis"] <- "Osmia_atriventris" 
+
+# remove kleptoparasites
+tree1 <- drop.tip(tree, tip = c("Coelioxys_moesta", 
+                                "Coelioxys_sayi",
+                                "Coelioxys_alternata",
+                                "Stelis_verticalis"))
+
+# get pairwise phylogenetic distances
+pw_phylo <- cophenetic(tree1)
+
+# double-checks: 
+# (1) all pairwise distances are equal or above zero
+# (2) pairwise distance matrix should be symmetric
+all(pw_phylo >= 0) 
+isSymmetric.matrix(pw_phylo)
+
+# calculate ses.mpd ------------------------------------------------------------
+
+# calculate ses.mpd according to a specific null model
+ses_mpd_full <- ses_mpd_tx(comm_relF, pw_phylo)
+ses_mpd_3Ab  <- ses_mpd_tx(comm_rel3, pw_phylo)
+ses_mpd_5ab  <- ses_mpd_tx(comm_rel5, pw_phylo)
+ses_mpd_10ab  <- ses_mpd_tx(comm_rel10, pw_phylo)
+
+# linear models: ses.mpd versus species richness -------------------------------
+
+# quick check to see if ses.mpd is correlated with species richness
+# look for effect sizes and R-squared values, ignore p-values
+
+summary(lm(formula = mpd.obs.z ~ ntaxa, data = ses_mpd_full))
+summary(lm(formula = mpd.obs.z ~ ntaxa, data = ses_mpd_3Ab))
+summary(lm(formula = mpd.obs.z ~ ntaxa, data = ses_mpd_5ab))
+summary(lm(formula = mpd.obs.z ~ ntaxa, data = ses_mpd_10ab))
+
+# Visualize histogram of p-values ----------------------------------------------
+
+crit1_hist_mpd(ses_mpd_full) + ggtitle("no abundance cut-offs")
+crit1_hist_mpd(ses_mpd_3Ab) + ggtitle("abundance cut-off of 3 individuals")
+crit1_hist_mpd(ses_mpd_5ab) + ggtitle("abundance cut-off of 5 individuals")
+crit1_hist_mpd(ses_mpd_10ab) + ggtitle("abundance cut-off of 10 individuals")
+
+# Save the data! ---------------------------------------------------------------
+
+# ses mpd csv file
+saveRDS(ses_mpd_full, here("data/working", "ses_mpd_full.rds"))
+saveRDS(ses_mpd_3Ab, here("data/working", "ses_mpd_3Ab.rds"))
+saveRDS(ses_mpd_5ab, here("data/working", "ses_mpd_5ab.rds"))
+saveRDS(ses_mpd_10ab, here("data/working", "ses_mpd_10ab.rds"))
