@@ -1,0 +1,63 @@
+library(here)
+library(dplyr)
+library(ggplot2)
+library(gghighlight)
+library(emmeans)
+
+# import ----------------------------------------------------------------------
+
+# site info
+site <- read.csv(
+  here("data/working", 
+       "site_tidy.csv")
+)
+
+# ses mfd
+ses_mfd <- readRDS(
+  here("data/working",
+       "ses_mfd.rds")
+)
+
+# data clean ------------------------------------------------------------------
+
+ses_mfd$site <- rownames(ses_mfd)
+
+tidy_df <- ses_mfd %>%
+  inner_join(site, by = c("site" = "site_id")) %>%
+  select(
+    ntaxa,
+    ses_mfd, 
+    p_value, 
+    habitat_type) %>%
+  mutate(habitat_type = factor(habitat_type))
+
+# plot -------------------------------------------------------------------------
+
+tidy_df %>%
+  ggplot(aes(x = habitat_type, y = ses_mfd)) + 
+  geom_point() + 
+  gghighlight(p_value < 0.05) + 
+  labs(y = "ses.MFD",
+       x = NULL) + 
+  theme_bw()
+
+lm1 <- lm(data = tidy_df, 
+          ses_mfd ~ habitat_type
+          )
+
+plot(lm1)
+
+ls_means <- pairs(
+  lsmeans(
+    lm1, 
+    specs = "habitat_type"
+    )
+  )
+
+plot(
+  ls_means, 
+  comparisons = FALSE,
+  ) + 
+  labs(y = NULL, 
+       x = "Estimated Least-Squares Mean") +
+  theme_bw() 
